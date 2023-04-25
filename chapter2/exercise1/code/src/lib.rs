@@ -4,8 +4,8 @@ use scrypto::prelude::*;
 //   - Tomato
 //   - Carrot
 //   - Broccoli
-// Don't forget to add a call to the `derive` macro with ScryptoCategorize, ScryptoEncode, ScryptoDecode, LegacyDescribe and Debug.
-// This last one, Debug, is neccessary as we are going to display it's value.
+// Don't forget to add a call to the `derive` macro with ScryptoSbor, and Debug.
+// This last one, Debug, is necessary as we are going to display its value.
 
 
 
