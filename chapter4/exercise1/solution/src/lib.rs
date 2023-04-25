@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 
-#[derive(NonFungibleData)]
+#[derive(ScryptoSbor, NonFungibleData)]
 struct MemberData {
     #[mutable]
     amount_staked: Decimal
@@ -27,7 +27,7 @@ mod exercise_module {
             // The IDs of this resource will be of type `NonFungibleIdType::UUID`
             // It is mintable and the individual metadata can be updated if a proof
             // of the member_manager badge is presented.
-            let member_badge = ResourceBuilder::new_uuid_non_fungible()
+            let member_badge = ResourceBuilder::new_uuid_non_fungible::<MemberData>()
                 .metadata("name", "Member Badge")
                 .mintable(rule!(require(member_manager_badge.resource_address())), rule!(deny_all))
                 .updateable_non_fungible_data(rule!(require(member_manager_badge.resource_address())), rule!(deny_all))
@@ -66,13 +66,15 @@ mod exercise_module {
 
             // Update the amount staked on the member NFT
             let non_fungible: NonFungible<MemberData> = member_proof.non_fungible();
-            let mut member_data = non_fungible.data();
+            let member_data = non_fungible.data();
 
-            member_data.amount_staked += amount;
+            let current_stake = member_data.amount_staked;
+
+            let new_stake = current_stake + amount;
 
             self.manager_badge.authorize(|| {
                 borrow_resource_manager!(self.member_resource_address)
-                    .update_non_fungible_data(&non_fungible.local_id(), member_data);
+                    .update_non_fungible_data(&non_fungible.local_id(), "amount_staked", new_stake);
             });
         }
 
@@ -82,16 +84,16 @@ mod exercise_module {
             let member_proof = member_proof.validate_proof(self.member_resource_address).expect("Wrong proof provided!");
             
             let non_fungible: NonFungible<MemberData> = member_proof.non_fungible();
-            let mut member_data = non_fungible.data();
+            let member_data = non_fungible.data();
 
             let amount_to_withdraw = member_data.amount_staked;
 
             // Update the amount staked to 0
-            member_data.amount_staked = Decimal::zero();
+            let new_stake = Decimal::zero();
 
             self.manager_badge.authorize(|| {
                 borrow_resource_manager!(self.member_resource_address)
-                    .update_non_fungible_data(&non_fungible.local_id(), member_data);
+                    .update_non_fungible_data(&non_fungible.local_id(), "amount_staked", new_stake);
             });
 
             // Return their staked XRD
